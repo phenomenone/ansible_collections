@@ -5,7 +5,7 @@
     name: "{{ item }}"
     state: present
   register: windows_readiness_iis_pool_status
-  loop: "{{ windows_pool_iis_name }}"
+  loop: "{{ app_pool_iis_name }}"
   loop_control:
     label: "Verificando el estado del IIS Web Application Pool {{ item }}"
 

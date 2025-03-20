@@ -3,7 +3,7 @@
   block:
     - name: Validar estado del servicio IIS.
       ansible.windows.win_service_info:
-        name: spooler
+        name: W3SVC
       register: windows_readiness_service_status
       failed_when: windows_readiness_service_status['services'][0]['state'] != "started"
   rescue:
