@@ -1,0 +1,64 @@
+---
+# tasks file for windows_readiness_metrica_dynatrace
+- name: Preparando los Datos para enviarlos a Dynatrace.
+  ansible.builtin.pause:
+    minutes: 2
+
+- name: Bloque para envío de datos a Dynatrace.
+  block:
+    - name: Enviar datos de Métrica a Dynatrace (Success).
+      when:
+        - not windows_readiness_error_flag
+      ansible.builtin.uri:
+        url: 'https://{{ dynatrace_environment_url }}/api/v2/metrics/ingest'
+        method: POST
+        body:
+          "{{ windows_readiness_dynatrace_metrica }},\
+          host={{ inventory_hostname }},\
+          solucion={{ windows_readiness_dynatrace_solucion }},\
+          producto={{ windows_readiness_dynatrace_producto }},\
+          grupo={{ windows_readiness_dynatrace_grupo }},\
+          datacenter=dcp,\
+          estado= 1"
+        headers:
+          accept: 'application/json; charset=utf-8'
+          Authorization: 'Api-Token {{ dynatrace_paas_token }}'
+          Content-Type: 'text/plain; charset=utf-8'
+        status_code: 202
+      register: windows_readiness_dynatrace_results
+      delegate_to: localhost
+      until: windows_readiness_dynatrace_results.msg is search('OK')
+      retries: 10
+      delay: 2
+
+    - name: Enviar datos de Métrica a Dynatrace (Fail).
+      when:
+        - windows_readiness_error_flag
+      ansible.builtin.uri:
+        url: 'https://{{ dynatrace_environment_url }}/api/v2/metrics/ingest'
+        method: POST
+        body:
+          "{{ windows_readiness_dynatrace_metrica }},\
+          host={{ inventory_hostname }},\
+          solucion={{ windows_readiness_dynatrace_solucion }},\
+          producto={{ windows_readiness_dynatrace_producto }},\
+          grupo={{ windows_readiness_dynatrace_grupo }},\
+          datacenter=dcp,\
+          estado= 0"
+        headers:
+          accept: 'application/json; charset=utf-8'
+          Authorization: 'Api-Token {{ dynatrace_paas_token }}'
+          Content-Type: 'text/plain; charset=utf-8'
+        status_code: 202
+      register: windows_readiness_dynatrace_results
+      delegate_to: localhost
+      until: windows_readiness_dynatrace_results.msg is search('OK')
+      retries: 10
+      delay: 2
+  rescue:
+    - name: Error enviando información a Dynatrace.
+      ansible.builtin.set_fact:
+        windows_readiness_error_message:
+          '{{ windows_readiness_error_message +
+          ["No se ha podido enviar el reporte de la ejecución a Dynatrace."] }}'
+        windows_readiness_error_flag: true

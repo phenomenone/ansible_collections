@@ -1,0 +1,35 @@
+# tasks file for windows_readiness_validar_iis
+- name: Bloque para validar servicio IIS.
+  block:
+    - name: Validar estado del servicio IIS.
+      ansible.windows.win_service_info:
+        name: W3SVC
+      register: windows_readiness_service_status
+      failed_when: windows_readiness_service_status['services'][0]['state'] != "started"
+  rescue:
+    - name: Servicio W3SVC no iniciado.
+      ansible.builtin.set_fact:
+        windows_readiness_error_message:
+          "{{ windows_readiness_error_message +
+          ['El servicio W3SVC está detenido en ' +
+          inventory_hostname] }}"
+        windows_readiness_error_flag: true
+
+- name: Bloque para verificar estado de IIS.
+  block:
+    - name: Verificar estado de los servicios IIS.
+      ansible.windows.win_command: iisreset.exe /STATUS
+      register: windows_readiness_iis_status
+      failed_when: "'Stopped' in windows_readiness_iis_status['stdout']"
+      changed_when: false
+
+    - name: Mostrar estado de los servicios IIS.
+      ansible.builtin.debug:
+        msg: >
+          {{ windows_readiness_iis_status['stdout_lines'] }}
+  rescue:
+    - name: Error en estado de servicios IIS.
+      ansible.builtin.set_fact:
+        windows_readiness_error_message:
+          '{{ windows_readiness_error_message + ["Hay servicios de IIS detenidos en {{ inventory_hostname }}."] }}'
+        windows_readiness_error_flag: true

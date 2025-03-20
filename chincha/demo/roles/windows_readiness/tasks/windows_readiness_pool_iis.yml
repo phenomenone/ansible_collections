@@ -1,0 +1,23 @@
+---
+# tasks file for windows_readiness_validar_iis_pools
+- name: Validar estado de IIS Web Application Pool.
+  community.windows.win_iis_webapppool:
+    name: "{{ item }}"
+    state: present
+  register: windows_readiness_iis_pool_status
+  loop: "{{ windows_pool_iis_name }}"
+  loop_control:
+    label: "Verificando el estado del IIS Web Application Pool {{ item }}"
+
+- name: Error en estado de IIS Web Application Pool.
+  when: item['info']['attributes']['state'] != "Started"
+  ansible.builtin.set_fact:
+    windows_readiness_error_message:
+      "{{ windows_readiness_error_message +
+      ['El AppPool ' + item['info']['attributes']['name'] +
+      ' esta en estado ' + item['info']['attributes']['state'] | string +
+      ' en ' + inventory_hostname] }}"
+    windows_readiness_error_flag: true
+  loop: "{{ windows_readiness_iis_pool_status['results'] | list }}"
+  loop_control:
+    label: "{{ item['item'] }}"
