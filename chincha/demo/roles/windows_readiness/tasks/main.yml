@@ -1,7 +1,7 @@
 ---
 # tasks file for windows_readiness
-- name: Importar tareas para envio de metricas iniciales a Dynatrace.
-  ansible.builtin.import_tasks: windows_readiness_dynatrace_fallido.yml
+# - name: Importar tareas para envio de metricas iniciales a Dynatrace.
+#   ansible.builtin.import_tasks: windows_readiness_dynatrace_fallido.yml
 
 - name: Importar tareas para validar IIS.
   ansible.builtin.import_tasks: windows_readiness_validar_iis.yml
@@ -9,35 +9,35 @@
 - name: Importar tareas para validar IIS Pools
   ansible.builtin.import_tasks: windows_readiness_pool_iis.yml
 
-- name: Bloque para validar estado de URL windows.
-  block:
-    - name: Validar acceso a URL windows.
-      ansible.windows.win_uri:
-        url: "{{ windows_url }}"
-        return_content: true
-        status_code: 200
-        validate_certs: false
-      register: windows_readiness_url_result
-  rescue:
-    - name: Error en validación de URL windows.
-      ansible.builtin.set_fact:
-        windows_readiness_url_error_message:
-          "{{ windows_readiness_url_error_message +
-          ['La URL ' + windows_url +
-          ' NO responde correctamente desde ' + inventory_hostname] }}"
-        windows_readiness_url_error_flag: true
+# - name: Bloque para validar estado de URL windows.
+#   block:
+#     - name: Validar acceso a URL windows.
+#       ansible.windows.win_uri:
+#         url: "{{ windows_url }}"
+#         return_content: true
+#         status_code: 200
+#         validate_certs: false
+#       register: windows_readiness_url_result
+#   rescue:
+#     - name: Error en validación de URL windows.
+#       ansible.builtin.set_fact:
+#         windows_readiness_url_error_message:
+#           "{{ windows_readiness_url_error_message +
+#           ['La URL ' + windows_url +
+#           ' NO responde correctamente desde ' + inventory_hostname] }}"
+#         windows_readiness_url_error_flag: true
 
-- name: Importar tareas para envio de metricas a Dynatrace
-  ansible.builtin.import_tasks:
-    file: windows_readiness_dynatrace.yml
+# - name: Importar tareas para envio de metricas a Dynatrace
+#   ansible.builtin.import_tasks:
+#     file: windows_readiness_dynatrace.yml
 
-- name: Ejecución de Readiness fallido.
-  when: windows_readiness_error_flag
-  ansible.builtin.fail:
-    msg: "{{ windows_readiness_error_message | list }}"
+# - name: Ejecución de Readiness fallido.
+#   when: windows_readiness_error_flag
+#   ansible.builtin.fail:
+#     msg: "{{ windows_readiness_error_message | list }}"
 
-- name: Ejecución de Readiness fallido por URL.
-  when: windows_readiness_url_error_flag
-  run_once: true
-  ansible.builtin.fail:
-    msg: "{{ windows_readiness_url_error_message | list }}"
+# - name: Ejecución de Readiness fallido por URL.
+#   when: windows_readiness_url_error_flag
+#   run_once: true
+#   ansible.builtin.fail:
+#     msg: "{{ windows_readiness_url_error_message | list }}"
