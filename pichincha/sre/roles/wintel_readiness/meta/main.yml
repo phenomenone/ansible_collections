@@ -1,0 +1,7 @@
+---
+galaxy_info:
+  author: eden
+  description: 'role que valida el estado de los servicios de windows y los application pools de iis'
+  company: sre
+  license: GPL-2.0-or-later
+  min_ansible_version: 2.14.0

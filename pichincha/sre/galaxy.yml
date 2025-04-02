@@ -1,0 +1,19 @@
+namespace: pichincha
+name: sre
+version: 1.0.6
+readme: README.md
+authors:
+- SRE <sre@pichincha.com>
+description: 'Esta colleción se encarga de la automatización de tareas de monitoreo/readiness para plataformas y applicaciones Windows, Unix, F5.'
+license:
+- GPL-2.0-or-later
+tags:
+  - sre
+  - readiness
+dependencies:
+  community.windows: '>=2.3.0'
+  ansible.windows: '>=2.7.0'
+repository: http://example.com/repository
+homepage: http://example.com
+issues: http://example.com/issue/tracker
+build_ignore: []
