@@ -1,6 +1,6 @@
 namespace: pichincha
 name: sre
-version: 1.0.6
+version: 1.0.7
 readme: README.md
 authors:
 - SRE <sre@pichincha.com>
