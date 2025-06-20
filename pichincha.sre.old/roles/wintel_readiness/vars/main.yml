@@ -4,3 +4,4 @@ wintel_readiness_error_message: []
 wintel_readiness_error_flag: false
 wintel_readiness_url_error_message: []
 wintel_readiness_url_error_flag: false
+wintel_readiness_url_result: []

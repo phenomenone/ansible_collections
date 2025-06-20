@@ -1,5 +1,6 @@
 ---
-# Default variables for the Wintel Readiness role
-win_app_pools: []
-win_services: []
-url_monitoreo: []
+# Default variables for Wintel Readiness role
+app_pools: []
+services: []
+app_urls: []
+iis_service: false

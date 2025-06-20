@@ -1,0 +1,38 @@
+---
+# tasks file for cardholder_readiness_validar_servicios
+- name: Validando estado de servicios.
+  block:
+    - name: Validaando estado de servicios en servidores.
+      ansible.windows.win_service_info:
+        name: "{{ item }}"
+      register: wintel_readiness_service_status
+      failed_when: not wintel_readiness_service_status['exists']
+      loop: "{{ services }}"
+      loop_control:
+        label: "Validando estado del servicio {{ item }}"
+  rescue:
+    - name: Servicios no existen.
+      when: not item['exists']
+      ansible.builtin.set_fact:
+        wintel_readiness_error_message:
+          "{{ wintel_readiness_error_message +
+          ['NO existe el servicio ' + item['item'] + ' en ' + inventory_hostname] }}"
+        wintel_readiness_error_flag: true
+      loop: "{{ wintel_readiness_service_status['results'] }}"
+      loop_control:
+        label: "{{ item['item'] }}"
+
+- name: Error en estado de servicios.
+  when:
+    - item['exists']
+    - item['services'][0]['state'] != "started"
+  ansible.builtin.set_fact:
+    wintel_readiness_error_message:
+      "{{ wintel_readiness_error_message +
+      ['El servicio ' + item['services'][0]['name'] +
+      ' está en estado ' + item['services'][0]['state'] +
+      ' en ' + inventory_hostname] }}"
+    wintel_readiness_error_flag: true
+  loop: "{{ wintel_readiness_service_status['results'] }}"
+  loop_control:
+    label: "{{ item['item'] }}"

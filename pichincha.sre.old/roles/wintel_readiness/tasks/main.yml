@@ -1,28 +1,77 @@
 ---
-- name: Debug de impresion de prueba de collection 'pichincha.sre'
-  ansible.builtin.debug:
-    msg: "Ejecutando el Role de readiness para Wintel en {{ inventory_hostname }}"
-  delegate_to: localhost
+# tasks file for cardholder_readiness
+- name: Importando tareas para envio de metricas iniciales a Dynatrace
+  when: 
+    - dynatrace_metrica is defined
+    - dynatrace_solucion is defined
+    - dynatrace_producto is defined
+    - dynatrace_grupo is defined
+  ansible.builtin.import_tasks: readiness_dynatrace_fallido.yml
 
-- name: Debug de Application Pools enviados a la collcetion 'pichincha.sre'
-  ansible.builtin.debug:
-    msg: "El nombre del Application Pool es {{ win_app_pools }}"
-  delegate_to: localhost
+- name: Importando tareas para validar servicios.
+  when:
+    - services is defined
+    - services | length > 0
+  ansible.builtin.import_tasks: readiness_validar_servicios.yml
 
-- name: Debug de Servicios enviados a la collcetion 'pichincha.sre'
-  ansible.builtin.debug:
-    msg: "El nombre del servicio es {{ win_services }}"
-  delegate_to: localhost
+- name: Importando tareas para validar el servicio de IIS.
+  when: 
+    - iis_service
+  ansible.builtin.import_tasks: readiness_validar_iis.yml
 
-- name: Debug de Servicios enviados a la collcetion 'pichincha.sre'
-  ansible.builtin.debug:
-    msg: "La url de dynatrace es {{ url_monitoreo }}"
-  delegate_to: localhost
+- name: Importando tareas para validar IIS application pool/s.
+  when: 
+    - iis_service
+    - app_pools is defined
+    - app_pools | length > 0
+  ansible.builtin.import_tasks: readiness_pool_iis.yml
 
-- name: Importar tareas para validar IIS.
-  ansible.builtin.import_tasks: wintel_readiness_validar_iis.yml
+- name: Bloque para validar estado de URL/s.
+  when: 
+    - app_urls is defined
+    - app_urls | length > 0
   run_once: true
+  block:
+    - name: Validando acceso a URL/s.
+      ansible.windows.win_uri:
+        url: "{{ item }}"
+        status_code: 200
+        validate_certs: false
+        return_content: true
+      loop: "{{ app_urls }}"
+      loop_control:
+        label: "Verificando acceso a url {{ item }}"
+      register: wintel_readiness_url_result
+  rescue:
+    - name: Error en validación de URL/s.
+      when:
+        - item['status_code'] != 200
+      ansible.builtin.set_fact:
+        wintel_readiness_url_error_message:
+          "{{ wintel_readiness_url_error_message +
+          ['La URL ' + item['url'] +
+          ' responde con status_code ' + item['status_code'] | string +
+          ' desde ' + inventory_hostname] }}"
+        wintel_readiness_url_error_flag: true
+      loop: "{{ wintel_readiness_url_result['results'] }}"
+      loop_control:
+        label: "{{ item['url'] }}"
 
-- name: Importar tareas para validar IIS Pools
-  ansible.builtin.import_tasks: wintel_readiness_pool_iis.yml
+- name: Importando tareas para envio de metricas a Dynatrace.
+  when: 
+  - dynatrace_metrica is defined
+  - dynatrace_solucion is defined
+  - dynatrace_producto is defined
+  - dynatrace_grupo is defined
+  ansible.builtin.import_tasks: readiness_dynatrace.yml
+
+- name: Ejecuctando Readiness fallido.
+  when: wintel_readiness_error_flag
+  ansible.builtin.fail:
+    msg: "{{ wintel_readiness_error_message | list }}"
+
+- name: Ejecutando Readiness fallido por URL.
+  when: wintel_readiness_url_error_flag
   run_once: true
+  ansible.builtin.fail:
+    msg: "{{ wintel_readiness_url_error_message | list }}"

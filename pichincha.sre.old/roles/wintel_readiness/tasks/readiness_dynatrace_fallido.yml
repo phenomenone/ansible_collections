@@ -1,0 +1,33 @@
+---
+# tasks file for wintel_readiness_metrica_dynatrace
+- name: Bloque para envío de datos a Dynatrace para servicios.
+  block:
+    - name: Enviando datos de métrica inicial a Dynatrace (Fail).
+      ansible.builtin.uri:
+        url: 'https://{{ dynatrace_environment_url }}/api/v2/metrics/ingest'
+        method: POST
+        body:
+          "{{ dynatrace_metrica }},\
+          host={{ inventory_hostname }},\
+          solucion={{ dynatrace_solucion }},\
+          producto={{ dynatrace_producto }},\
+          grupo={{ dynatrace_grupo }},\
+          datacenter=dcp,\
+          estado= 0"
+        headers:
+          accept: 'application/json; charset=utf-8'
+          Authorization: 'Api-Token {{ dynatrace_paas_token }}'
+          Content-Type: 'text/plain; charset=utf-8'
+        status_code: 202
+      register: wintel_readiness_dynatrace_results
+      delegate_to: localhost
+      until: wintel_readiness_dynatrace_results.msg is search('OK')
+      retries: 10
+      delay: 2
+  rescue:
+    - name: Error enviando información a Dynatrace.
+      ansible.builtin.set_fact:
+        wintel_readiness_error_message:
+          '{{ wintel_readiness_error_message +
+          ["No se ha podido enviar el reporte de la ejecución a Dynatrace."] }}'
+        wintel_readiness_error_flag: true

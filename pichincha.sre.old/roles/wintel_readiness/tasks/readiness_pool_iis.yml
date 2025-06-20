@@ -1,11 +1,11 @@
 ---
-# tasks file for wintel_readiness_validar_iis_pools
-- name: Validar estado de IIS Web Application Pool.
+# tasks file for cardholder_readiness_validar_iis_pools
+- name: Validar estado de IIS Web Application Pools.
   community.windows.win_iis_webapppool:
     name: "{{ item }}"
     state: present
-  register: wintel_readiness_iis_pool_status
-  loop: "{{ win_app_pools }}"
+  register: cardholder_readiness_iis_pool_status
+  loop: "{{ app_pools }}"
   loop_control:
     label: "Verificando el estado del IIS Web Application Pool {{ item }}"
 

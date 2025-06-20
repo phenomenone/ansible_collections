@@ -1,23 +1,7 @@
-# tasks file for wintel_readiness_validar_iis
-- name: Bloque para validar servicio IIS.
-  block:
-    - name: Validar estado del servicio IIS.
-      ansible.windows.win_service_info:
-        name: W3SVC
-      register: wintel_readiness_service_status
-      failed_when: wintel_readiness_service_status['services'][0]['state'] != "started"
-  rescue:
-    - name: Servicio W3SVC no iniciado.
-      ansible.builtin.set_fact:
-        wintel_readiness_error_message:
-          "{{ wintel_readiness_error_message +
-          ['El servicio W3SVC está detenido en ' +
-          inventory_hostname] }}"
-        wintel_readiness_error_flag: true
-
+# tasks file for webteller_readiness_validar_iis
 - name: Bloque para verificar estado de IIS.
   block:
-    - name: Verificar estado de los servicios IIS.
+    - name: Verificando estado de los servicios IIS.
       ansible.windows.win_command: iisreset.exe /STATUS
       register: wintel_readiness_iis_status
       failed_when: "'Stopped' in wintel_readiness_iis_status['stdout']"
